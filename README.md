@@ -159,6 +159,8 @@ Open questions before relying on deployed runs:
 - No deployment or scheduling yet: the pipelines run on demand from the scripts (see Deploy).
 - `gpt-5.4` breaks the `agent_rocketride` planner, so the pipelines use gpt-5.2.
 - In `rocketride_sql`, a cast written on a placeholder (`$1::text`) fails; write `CAST($1 AS text)`.
+- Edit `.pipe` files in place while the canvas has them open: a save that writes a temp file and renames it makes
+  the canvas re-key `project_id`, and the demo UI hardcodes the project ids in `apps/staffingAgent-ui/src/agents.ts`.
 
 ## Next steps
 

@@ -50,10 +50,10 @@ Status values: `todo`, `doing`, `blocked`, `done`, `cut`.
 
 | ID | Task | Owner | Depends on | Status |
 |----|------|-------|------------|--------|
-| B4 | Demo UI in `apps/staffingAgent-ui`: per agent its input (brief), each tool call (name, input, output) and its output (answer), plus the DB tables. The app observes runs started with `npm run demo` | bench | B2 | doing (status 16:30, done 16:50) |
+| B4 | Demo UI in `apps/staffingAgent-ui`: per agent its input (brief), each tool call (name, input, output) and its output (answer), plus the DB tables. The app observes runs started with `npm run demo` | bench | B2 | done 16:09 (builds, `app verify` passes; pushed in a8e6da3; not yet viewed in a browser) |
 | P7 | Deploy and publish `bench.pipe`, `hunter.pipe` and the UI app; document the server-side secrets (no schedules unless the user asks) | platform | U3, B4, R2 | doing (prep only until go) |
 | U3 | User: `npx --no -- rocketride login --deploy` (writes the DEPLOY pair) and confirm the team id | lead / user | - | blocked (asked user) |
-| G1 | Push to `main` on GitHub (public repo): `*.pipe` go through the `pipe-secrets` clean filter, which blanks `userToken`; secret scan before push | lead | R2, B4, P7 | todo |
+| G1 | Push to `main` on GitHub (public repo): `*.pipe` go through the `pipe-secrets` clean filter, which blanks `userToken`; secret scan before push | lead | R2, B4, P7 | doing (checkpoints pushed: 242fef2, a8e6da3; secret scan clean) |
 
 ## Cut
 
