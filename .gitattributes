@@ -1,0 +1,2 @@
+# Strip OAuth tokens (userToken, serviceKey) from pipelines on commit; see scripts/strip-pipe-secrets.sh
+*.pipe filter=pipe-secrets

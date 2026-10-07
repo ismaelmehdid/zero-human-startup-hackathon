@@ -1,0 +1,114 @@
+{
+	"components": [
+		{
+			"id": "filestore_source_1",
+			"provider": "filestore_source",
+			"config": {
+				"hideForm": true,
+				"mode": "Source",
+				"parameters": { "path": "briefs/bench.md", "recursive": false },
+				"type": "filestore_source"
+			},
+			"ui": { "position": { "x": 20, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "parse_1",
+			"provider": "parse",
+			"config": {},
+			"input": [{ "lane": "tags", "from": "filestore_source_1" }],
+			"ui": { "position": { "x": 240, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "question_1",
+			"provider": "question",
+			"config": { "type": "question" },
+			"input": [{ "lane": "text", "from": "parse_1" }],
+			"ui": { "position": { "x": 460, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "agent_rocketride_1",
+			"provider": "agent_rocketride",
+			"config": {
+				"agent_description": "Bench keeper: adds every consultant CV found in our Box folder to the consultants table, using Box AI to extract the profile. All state is in the SQL database.",
+				"instructions": [
+					"You keep our consultant bench in sync with the CV files in Box folder ${ROCKETRIDE_BOX_FOLDER_ID}. The question you receive is the standing brief for this run; follow it. Your tools: the box.* tools (Box MCP server) and the RocketRide SQL database tool. All state lives in the database; you remember nothing between runs. Every planning response you produce must be exactly one JSON object, never two.",
+					"Step 1: in your first wave, call the Box folder-listing tool for folder ${ROCKETRIDE_BOX_FOLDER_ID} (follow pagination until every item is listed) and, in the same wave, run this exact SQL with the database tool's direct execute function: SELECT box_file_id FROM consultants;",
+					"Step 2: candidates are the items of type file whose Box file id is not among the returned box_file_id values. Ignore folders, web links, and files that are clearly not CVs or resumes. Take at most the number of new CVs per run that the brief allows (10 if it says nothing).",
+					"Step 3: for each candidate, call the Box AI structured extraction tool that takes custom fields, on that single file id, with these fields: full_name (string: the candidate's full name), title (string: current or most recent job title), skills (string: comma-separated list of the technical skills, tools, platforms and languages the CV lists), years_experience (float: total years of professional experience), hourly_rate_usd (float: hourly rate in US dollars, only if the CV states one), location (string: city, state or region, country), availability (string: availability as the CV states it), summary (string: two or three factual sentences summarizing the profile, using only what the CV says).",
+					"Step 4: turn the extracted skills into a clean list: lowercase, trimmed, deduplicated, technical skills only, at most 25, canonical short names (javascript not js, typescript not ts, kubernetes not k8s, aws not amazon web services, gcp not google cloud platform, azure not microsoft azure, postgresql not postgres, node.js not nodejs, react not react.js, go not golang, c# not c sharp, .net not dotnet).",
+					"Step 5: store each profile with one SQL statement through the database tool's direct execute function (never the natural-language query path), written with literal values and no $n parameters: INSERT INTO consultants (box_file_id, full_name, title, skills, years_experience, hourly_rate_usd, location, availability, summary) VALUES (...) ON CONFLICT (box_file_id) DO UPDATE SET full_name = EXCLUDED.full_name, title = EXCLUDED.title, skills = EXCLUDED.skills, years_experience = EXCLUDED.years_experience, hourly_rate_usd = EXCLUDED.hourly_rate_usd, location = EXCLUDED.location, availability = EXCLUDED.availability, summary = EXCLUDED.summary; Write skills as ARRAY['python','aws']::text[] (ARRAY[]::text[] when there are none), years_experience as a whole number (rounded), hourly_rate_usd as a plain number with at most 2 decimals, numbers without quotes, escape single quotes in text by doubling them, and use NULL for any other value the extraction did not return.",
+					"Grounding: every stored value must come from the Box AI extraction result of that exact file. Never invent, guess or infer a name, title, rate, location, availability or skill. If the extraction returns no full_name, skip the file and report it. Do not write to any table other than consultants and never delete rows. Never repeat any credential or access token in your output.",
+					"Finish by running SELECT count(*) FROM consultants; and answer with a short plain-text report: number of items in the folder, number already on the bench, each consultant added (box_file_id and full_name), each file skipped with the reason, every tool error verbatim, and the final consultants count."
+				],
+				"max_waves": 20,
+				"require_tool_call": true,
+				"parameters": {}
+			},
+			"input": [{ "lane": "questions", "from": "question_1" }],
+			"ui": { "position": { "x": 680, "y": 200 }, "measured": { "width": 150, "height": 86 } }
+		},
+		{
+			"id": "response_answers_1",
+			"provider": "response_answers",
+			"config": { "laneName": "answers" },
+			"input": [{ "lane": "answers", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 900, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "llm_openai_1",
+			"provider": "llm_openai",
+			"config": {
+				"profile": "openai-5-2",
+				"openai-5-2": { "apikey": "${ROCKETRIDE_OPENAI_KEY}", "temperature": 0 },
+				"parameters": {}
+			},
+			"control": [
+				{ "classType": "llm", "from": "agent_rocketride_1" },
+				{ "classType": "llm", "from": "rocketride_sql_1" }
+			],
+			"ui": { "position": { "x": 520, "y": 380 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "memory_internal_1",
+			"provider": "memory_internal",
+			"config": { "type": "memory_internal" },
+			"control": [{ "classType": "memory", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 690, "y": 380 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "rocketride_sql_1",
+			"provider": "rocketride_sql",
+			"config": {
+				"profile": "default",
+				"default": {
+					"db_description": "Shared state of an IT-consultant placement system (PostgreSQL). This pipeline uses only consultants(id serial primary key, box_file_id text not null unique, full_name text not null, title text, skills text[] not null default '{}', years_experience integer, hourly_rate_usd numeric(8,2), location text, availability text, summary text, created_at timestamptz): one row per consultant CV stored in Box. Other tables (opportunities, touches, meetings) belong to other pipelines.",
+					"table": "consultants",
+					"max_attempts": 5,
+					"allow_execute": true
+				},
+				"parameters": {}
+			},
+			"control": [{ "classType": "tool", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 860, "y": 380 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "mcp_client_1",
+			"provider": "mcp_client",
+			"config": {
+				"type": "mcp_client",
+				"serverName": "box",
+				"transport": "streamable-http",
+				"http": {
+					"endpoint": "https://mcp.box.com",
+					"bearer": "${ROCKETRIDE_BOX_TOKEN}",
+					"headers": {}
+				}
+			},
+			"control": [{ "classType": "tool", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 1030, "y": 380 }, "measured": { "width": 150, "height": 40 } }
+		}
+	],
+	"project_id": "f99f7565-bca6-46c1-a52e-55acff0f8efb",
+	"viewport": { "x": 0, "y": 0, "zoom": 1 },
+	"version": 1
+}

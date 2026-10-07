@@ -1,0 +1,109 @@
+{
+	"components": [
+		{
+			"id": "filestore_source_1",
+			"provider": "filestore_source",
+			"config": {
+				"hideForm": true,
+				"mode": "Source",
+				"parameters": { "path": "briefs/closer.md", "recursive": false },
+				"type": "filestore_source"
+			},
+			"ui": { "position": { "x": 20, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "parse_1",
+			"provider": "parse",
+			"config": {},
+			"input": [{ "lane": "tags", "from": "filestore_source_1" }],
+			"ui": { "position": { "x": 240, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "question_1",
+			"provider": "question",
+			"config": { "type": "question" },
+			"input": [{ "lane": "text", "from": "parse_1" }],
+			"ui": { "position": { "x": 460, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "agent_rocketride_1",
+			"provider": "agent_rocketride",
+			"config": {
+				"agent_description": "Closer: reads prospect replies on our outreach Gmail threads, books meetings on Google Calendar, and sends due follow-up emails. All state is in the SQL database.",
+				"instructions": [
+					"The user message is your standing brief. Follow its steps in order, every run. All state lives in the SQL database (tables consultants, opportunities, touches, meetings): read it before acting and write every change back before you finish. Use the SQL tool's direct execute for every read and write, and return ids with RETURNING where useful.",
+					"DEMO MODE IS ALWAYS ON. The only address you may ever put in a To field, or in a calendar attendee list, is the demo inbox ${ROCKETRIDE_DEMO_INBOX} with plus addressing: insert '+' and the company slug before the '@'. Company slug = the company name lowercased, every run of characters other than a-z and 0-9 replaced by one '-', leading and trailing '-' removed (example: 'Acme Test Co' -> 'acme-test-co'). Never send anything to contact_email or to any other address. If the demo inbox above is not a valid email address, send nothing and say so in your report.",
+					"GROUNDING: every factual sentence in an email or a calendar event must come from a database row or a tool result from this run. Never invent people, companies, times, rates, skills or claims.",
+					"IDEMPOTENCY: never email an opportunity with do_not_contact = true. Only send touches whose status is 'scheduled'. Record each sent email in the database immediately after sending it (status, sent_at, gmail_message_id), before doing anything else.",
+					"Finish with a short plain-text report: for each opportunity handled, what you found, what you did, and the ids you wrote (gmail message and thread ids, calendar event id)."
+				],
+				"max_waves": 30,
+				"require_tool_call": true,
+				"parameters": {}
+			},
+			"input": [{ "lane": "questions", "from": "question_1" }],
+			"ui": { "position": { "x": 680, "y": 200 }, "measured": { "width": 150, "height": 86 } }
+		},
+		{
+			"id": "response_answers_1",
+			"provider": "response_answers",
+			"config": { "laneName": "answers" },
+			"input": [{ "lane": "answers", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 900, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "llm_anthropic_1",
+			"provider": "llm_anthropic",
+			"config": {
+				"profile": "claude-sonnet-4-6",
+				"claude-sonnet-4-6": { "apikey": "${ROCKETRIDE_ANTHROPIC_KEY}", "extendedThinking": false },
+				"parameters": {}
+			},
+			"control": [
+				{ "classType": "llm", "from": "agent_rocketride_1" },
+				{ "classType": "llm", "from": "rocketride_sql_1" }
+			],
+			"ui": { "position": { "x": 460, "y": 400 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "memory_internal_1",
+			"provider": "memory_internal",
+			"config": { "type": "memory_internal" },
+			"control": [{ "classType": "memory", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 640, "y": 400 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "rocketride_sql_1",
+			"provider": "rocketride_sql",
+			"config": {
+				"profile": "default",
+				"default": {
+					"allow_execute": true,
+					"db_description": "Shared state of an IT-consultant placement outreach system (PostgreSQL). consultants(box_file_id unique, full_name, title, skills text[], years_experience, hourly_rate_usd, location, availability, summary). opportunities(company, company_domain, role_title, job_url unique, required_skills, contact_name, contact_title, contact_email, contact_linkedin, hook, consultant_id -> consultants, match_rationale, stage in new|contacted|replied|meeting_booked|lost|no_response, gmail_thread_id, do_not_contact). touches(opportunity_id -> opportunities, step, direction in out|in, subject, body, status in scheduled|sent|received|cancelled, due_at, sent_at, gmail_message_id). meetings(opportunity_id -> opportunities, calendar_event_id, starts_at).",
+					"max_attempts": 5,
+					"table": "opportunities"
+				},
+				"parameters": {}
+			},
+			"control": [{ "classType": "tool", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 820, "y": 400 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "tool_gmail_1",
+			"provider": "tool_gmail",
+			"config": { "type": "tool_gmail", "authType": "user", "access": "send" },
+			"control": [{ "classType": "tool", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 1000, "y": 400 }, "measured": { "width": 150, "height": 40 } }
+		},
+		{
+			"id": "tool_calendar_1",
+			"provider": "tool_calendar",
+			"config": { "type": "tool_calendar", "authType": "user", "access": "write" },
+			"control": [{ "classType": "tool", "from": "agent_rocketride_1" }],
+			"ui": { "position": { "x": 1180, "y": 400 }, "measured": { "width": 150, "height": 40 } }
+		}
+	],
+	"project_id": "3c24351f-2cd4-4bff-a5f5-4f0d94b9d797",
+	"viewport": { "x": 0, "y": 0, "zoom": 1 },
+	"version": 1
+}

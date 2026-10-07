@@ -1,0 +1,30 @@
+{
+  "name": "zero-human-startup-hackathon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "briefs": "bash scripts/upload-briefs.sh",
+    "run:bench": "node --env-file=.env scripts/run.mjs bench",
+    "run:hunter": "node --env-file=.env scripts/run.mjs hunter --upload-brief",
+    "demo": "node --env-file=.env scripts/demo.mjs",
+    "stats": "node --env-file=.env scripts/stats.mjs",
+    "reset": "node --env-file=.env scripts/reset.mjs",
+    "db": "node --env-file=.env scripts/db.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ismaelmehdid/zero-human-startup-hackathon.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ismaelmehdid/zero-human-startup-hackathon/issues"
+  },
+  "homepage": "https://github.com/ismaelmehdid/zero-human-startup-hackathon#readme",
+  "dependencies": {
+    "rocketride": "file:.rocketride/client/rocketride.tgz"
+  }
+}

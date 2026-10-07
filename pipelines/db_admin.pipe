@@ -1,0 +1,40 @@
+{
+	"components": [
+		{
+			"id": "tools_1",
+			"provider": "tools",
+			"config": { "hideForm": true, "mode": "Source", "parameters": {}, "type": "tools" },
+			"ui": { "position": { "x": 20, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "rocketride_sql_1",
+			"provider": "rocketride_sql",
+			"config": {
+				"profile": "default",
+				"default": {
+					"db_description": "Shared state of an AI staffing agency that places US IT consultants on contract. consultants: our bench (one row per CV, box_file_id unique, skills text[]). opportunities: job postings we prospect (job_url unique, stage one of new, contacted, replied, meeting_booked, lost, no_response; do_not_contact flag). touches: emails per opportunity (direction out or in, status scheduled, sent, received or cancelled; one outgoing row per step). meetings: booked calls, at most one per opportunity.",
+					"table": "opportunities",
+					"max_attempts": 5,
+					"allow_execute": true
+				},
+				"parameters": {}
+			},
+			"control": [{ "classType": "tool", "from": "tools_1" }],
+			"ui": { "position": { "x": 240, "y": 200 }, "measured": { "width": 150, "height": 66 } }
+		},
+		{
+			"id": "llm_anthropic_1",
+			"provider": "llm_anthropic",
+			"config": {
+				"profile": "claude-haiku-4-5",
+				"claude-haiku-4-5": { "apikey": "${ROCKETRIDE_ANTHROPIC_KEY}", "extendedThinking": false },
+				"parameters": {}
+			},
+			"control": [{ "classType": "llm", "from": "rocketride_sql_1" }],
+			"ui": { "position": { "x": 240, "y": 360 }, "measured": { "width": 150, "height": 66 } }
+		}
+	],
+	"project_id": "e06d297e-a9b6-4f4f-af89-1f4a79259b83",
+	"viewport": { "x": 0, "y": 0, "zoom": 1 },
+	"version": 1
+}
