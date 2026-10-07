@@ -7,8 +7,9 @@ pipelines. Hackathon prototype.
 
 - **bench** keeps the consultant bench current: it reads the CVs in a Box folder, extracts each profile with Box AI
   and upserts it into the Postgres `consultants` table (at most 10 new CVs per run; it never deletes a consultant).
-- **hunter** finds a US contract job and its hiring decision-maker, matches a consultant from the bench, writes a
-  three-email sequence and sends the first email to the demo inbox, recording every step in the database.
+- **hunter** (partial, see Status and limitations) finds a US contract job and its hiring decision-maker, matches a
+  consultant from the bench, writes a three-email sequence and sends the first email to the demo inbox, recording
+  every step in the database.
 
 ## Architecture
 
@@ -154,6 +155,11 @@ Open questions before relying on deployed runs:
 
 ## Status and limitations
 
+- hunter is partial. It finds real job postings and decision-makers (Glasser LinkedIn job search, ZoomInfo) and
+  stays grounded on gpt-5.2, but no run has completed end to end yet: the agent cannot reliably read the
+  ~200k-character job-search results back from memory, and it loops until `max_waves`.
+- Gmail sending is blocked: the `gmail` node's `check_connection` returns `Gmail API 403 (accessNotConfigured)`
+  because the Gmail API is disabled in the Google Cloud project behind the OAuth client. Enable it there and retry.
 - closer (`pipelines/closer.pipe`: reply handling and meeting booking) is drafted but has never run.
 - hunter runs as a single agent; a director-plus-specialists split was generated but has never run.
 - No deployment or scheduling yet: the pipelines run on demand from the scripts (see Deploy).

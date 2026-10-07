@@ -35,7 +35,7 @@ Status values: `todo`, `doing`, `blocked`, `done`, `cut`.
 | B2 | `pipelines/bench.pipe` + `briefs/bench.md`: validate, real run upserts CVs into `consultants` (target 15:30) | bench | P1, B1 | done 15:32 (1 CV added in 51 s; idempotent rerun added none; LLM profile `openai-5-2`) |
 | H1 | Prove the Glasser handshake with the free `balance` tool | hunter | U1 (Glasser key) | done (balance $1.00; search and inspect free) |
 | H2a | `tool_gmail` node (access `send`) in `pipelines/hunter.pipe` with its final node id, ready for the Google connection | hunter | - | done (node `gmail`) |
-| H2 | Single-agent version: one job, one contact, one email to the demo inbox (1 prospect per run) | hunter | P1, H1, U2 | doing (go 15:47, `openai-5-2`) |
+| H2 | Single-agent version: one job, one contact, one email to the demo inbox (1 prospect per run) | hunter | P1, H1, U2 | blocked: 11 attempts, none end to end (the agent can't read the ~200k-char job results from memory). Gmail returns `403 accessNotConfigured` (Gmail API disabled in the OAuth client's Google Cloud project). Spend $0.6045 |
 | H3 | Split into director + scout, matcher and sdr; real run (decide at 15:45) | hunter | H2 | cut for today at 15:45 (generated split variant validates; shown as next step) |
 | H4 | Switch the LLM node of `hunter.pipe` to `llm_openai` before the Google connection | hunter | - | done (single-agent instructions applied; apify node dropped, no key) |
 | B3 | Switch the LLM node of `bench.pipe` (and the fallback) to `llm_openai` | bench | - | done (`llm_openai_1`, both validate) |
@@ -70,7 +70,7 @@ Status values: `todo`, `doing`, `blocked`, `done`, `cut`.
 | Box MCP handshake, and which kind of token it accepts | bench (B1) | passed: `mcp.box.com` accepts a Box developer token (free developer account, user is admin); `ai_extract_structured_from_fields` takes about 18 s against the 20 s MCP timeout |
 | Glasser MCP handshake | hunter (H1) | passed (`balance`, `search`, `inspect`; job search via apify `harvestapi/linkedin-job-search` $0.011; ZoomInfo contacts $0.0005) |
 | `agent_rocketride` agents used as tools are reliable (else CrewAI or single agent) | hunter (H3) | not tested today (split cut at 15:45) |
-| Gmail works after the canvas Google connection | hunter (H2) | - |
+| Gmail works after the canvas Google connection | hunter (H2) | failed: `check_connection` returns `Gmail API 403 (accessNotConfigured)`; the Gmail API must be enabled in Google Cloud project 841282965419 |
 | A cron run of a `filestore_source` pipeline starts by itself | cut | not tested |
 | `rocketride_sql` works in a scheduled team run | cut | not tested |
 
