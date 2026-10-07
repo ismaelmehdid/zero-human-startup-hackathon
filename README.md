@@ -162,7 +162,7 @@ Open questions before relying on deployed runs:
   because the Gmail API is disabled in the Google Cloud project behind the OAuth client. Enable it there and retry.
 - closer (`pipelines/closer.pipe`: reply handling and meeting booking) is drafted but has never run.
 - hunter runs as a single agent; a director-plus-specialists split was generated but has never run.
-- No deployment or scheduling yet: the pipelines run on demand from the scripts (see Deploy).
+- Deployed on 2026-10-07: bench and hunter v1 are published to the team, and the UI app is published to the deployer's personal desktop. There are no schedules yet, and deployed runs are untested (see Deploy for the open questions about briefs and the Box token lifetime). Runs start on demand from the scripts.
 - `gpt-5.4` breaks the `agent_rocketride` planner, so the pipelines use gpt-5.2.
 - In `rocketride_sql`, a cast written on a placeholder (`$1::text`) fails; write `CAST($1 AS text)`.
 - Edit `.pipe` files in place while the canvas has them open: a save that writes a temp file and renames it makes

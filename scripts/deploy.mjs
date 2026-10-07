@@ -75,12 +75,22 @@ async function preflight() {
 	return problems;
 }
 
+// --existing bench=1,hunter=2 publishes versions already in the registry instead of adding new ones (resume).
+const existingVersions = Object.fromEntries(
+	(option('--existing') ?? '').split(',').filter(Boolean).map((pair) => pair.split('=')),
+);
+
 async function deployPipelines() {
 	for (const file of PIPELINES) {
 		console.log(`\n=== ${file}`);
-		const added = cli(['deploy', 'add', file, '--comment', comment]);
-		const projectId = added?.projectId ?? '<projectId>';
+		const pipeline = JSON.parse(await readFile(path.join(WORKSPACE_ROOT, file), 'utf8'));
+		const existing = existingVersions[pipeline.name];
+		const added = existing ? { version: Number(existing) } : cli(['deploy', 'add', file, '--comment', comment]);
+		if (existing) console.log(`(using registry version ${existing} of ${pipeline.name}: no new deploy)`);
+		// `deploy add --json` reports the version but not the project id, which is the pipeline's own project_id.
+		const projectId = added?.projectId ?? pipeline.project_id;
 		const version = added?.version ?? '<version>';
+		if (go && added?.version === undefined) throw new Error(`deploy add returned no version for ${file}`);
 		cli(['deploy', 'publish', String(projectId), String(version), '--team', teamId]);
 		const artifact = cli(['deploy', 'artifact', String(projectId), String(version)]);
 		if (go && file.endsWith('hunter.pipe')) {
@@ -101,8 +111,11 @@ async function deployApp() {
 	if (!go) return;
 	const client = await connectDeploy();
 	try {
-		await client.publishApp(appId, deployed.version, appTarget);
-		console.log(`published ${appId} v${deployed.version} to ${appTarget}`);
+		// `app deploy --json` does not report the version: find the one this run deployed by its comment.
+		const version = deployed?.version ?? (await client.listDeployments(appId)).find((row) => row.message === comment)?.registryVersion;
+		if (version === undefined) throw new Error(`could not find the version of ${appId} deployed with comment "${comment}"`);
+		await client.publishApp(appId, version, appTarget);
+		console.log(`published ${appId} v${version} to ${appTarget}`);
 	} finally {
 		await client.disconnect().catch(() => {});
 	}
