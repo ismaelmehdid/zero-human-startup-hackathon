@@ -108,6 +108,7 @@
 			"ui": { "position": { "x": 1030, "y": 380 }, "measured": { "width": 150, "height": 40 } }
 		}
 	],
+	"name": "bench",
 	"project_id": "f99f7565-bca6-46c1-a52e-55acff0f8efb",
 	"viewport": { "x": 0, "y": 0, "zoom": 1 },
 	"version": 1

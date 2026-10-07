@@ -2,20 +2,20 @@
   "name": "local-staffingagent",
   "version": "0.1.0",
   "private": true,
-  "description": "Staffing Agent — a RocketRide app",
+  "description": "Live view of the Staffing Agent demo: each agent's brief, tool calls and answer, plus the shared database.",
   "license": "MIT",
   "appManifest": {
-    "id": "local.staffingAgent",
-    "publisher": "local",
+    "id": "ismaelmehdid.staffingAgent",
+    "publisher": "ismaelmehdid",
     "name": "Staffing Agent",
-    "description": "Staffing Agent — a RocketRide app",
+    "description": "Live view of the Staffing Agent demo: each agent's brief, tool calls and answer, plus the shared database.",
     "icon": "./icon.svg",
     "readme": "./README.md",
     "categories": [
       "custom"
     ],
     "mode": "free",
-    "authenticated": false,
+    "authenticated": true,
     "projectId": "d7a2304e-6e8d-4143-8ec7-663aacc2ecf4"
   },
   "scripts": {

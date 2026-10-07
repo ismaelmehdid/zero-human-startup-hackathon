@@ -19,7 +19,7 @@ import type { AppDescriptor } from 'shell';
 import App from './App';
 
 const descriptor: AppDescriptor = {
-	id: 'local.staffingAgent',
+	id: 'ismaelmehdid.staffingAgent',
 	name: 'Staffing Agent',
 	branding: { appName: 'Staffing Agent' },
 	app: App,
