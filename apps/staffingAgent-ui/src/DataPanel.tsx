@@ -4,24 +4,51 @@
 // =============================================================================
 
 /**
- * The shared database as the agents leave it: consultants, opportunities with
- * their stage, and touches (emails). Refreshed every 5 seconds.
+ * The shared database as the agents leave it: a stage funnel of the
+ * opportunities, then consultants, opportunities with their stage, and
+ * touches (emails). Refreshed every 5 seconds.
  */
 
 import React, { useMemo, useState } from 'react';
-import { Banner, Button, Card, DataGrid, TabControl, badgeEl, commonStyles } from 'shell';
+import { Banner, Button, BxChevronRight, BxGridAlt, BxRefresh, Card, DataGrid, TabControl, badgeEl, commonStyles } from 'shell';
 import type { GridColumnDefinition } from 'shell';
 import type { DatabaseState } from './useDatabase';
+import { IconTile, LiveDot, TONE, tint, type Tone } from './ui';
 
 // =============================================================================
 // STYLES
 // =============================================================================
 
 const styles: Record<string, React.CSSProperties> = {
-	headerActions: { display: 'flex', alignItems: 'center', gap: 8 },
-	updated: { ...commonStyles.textMuted, fontSize: 12 },
+	header: { display: 'inline-flex', alignItems: 'center', gap: 10 },
+	headerActions: { display: 'flex', alignItems: 'center', gap: 10 },
+	updated: { ...commonStyles.textMuted, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontVariantNumeric: 'tabular-nums' },
+	buttonLabel: { display: 'inline-flex', alignItems: 'center', gap: 5 },
+	intro: { ...commonStyles.textMuted, fontSize: 12.5, lineHeight: 1.5, marginBottom: 14 },
+	funnelLabel: { ...commonStyles.labelUppercase, fontSize: 10.5, letterSpacing: '0.8px', marginBottom: 8 },
+	funnel: { display: 'flex', alignItems: 'stretch', gap: 6, flexWrap: 'wrap', marginBottom: 18 },
+	stages: { display: 'flex', alignItems: 'stretch', gap: 6, flex: '3 1 520px', minWidth: 0 },
+	closed: { display: 'flex', alignItems: 'stretch', gap: 6, flex: '1 1 220px', minWidth: 0, paddingLeft: 12, borderLeft: '1px dashed var(--rr-border)' },
+	arrow: { display: 'flex', alignItems: 'center', color: 'var(--rr-text-disabled)', flexShrink: 0 },
+	stage: { flex: 1, minWidth: 0, padding: '10px 12px 12px', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 6 },
+	stageLabel: { ...commonStyles.textEllipsis, fontSize: 11.5, fontWeight: 600, color: 'var(--rr-text-secondary)' },
+	stageCount: { fontSize: 22, fontWeight: 700, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums', color: 'var(--rr-text-primary)' },
+	track: { display: 'block', height: 4, borderRadius: 2, overflow: 'hidden', background: tint('var(--rr-text-primary)', 8) },
+	empty: { ...commonStyles.textMuted, fontSize: 12, marginTop: -8, marginBottom: 16 },
 	grid: { marginTop: 8 },
 };
+
+function stageStyle(tone: Tone, count: number): React.CSSProperties {
+	return {
+		...styles.stage,
+		background: count > 0 ? tint(TONE[tone], 9) : tint('var(--rr-text-primary)', 3),
+		boxShadow: `inset 0 0 0 1px ${count > 0 ? tint(TONE[tone], 30) : 'var(--rr-border)'}`,
+	};
+}
+
+function fillStyle(tone: Tone, ratio: number): React.CSSProperties {
+	return { display: 'block', height: '100%', width: `${Math.round(ratio * 100)}%`, borderRadius: 2, background: TONE[tone], transition: 'width 0.4s ease' };
+}
 
 // =============================================================================
 // COLUMNS
@@ -95,6 +122,75 @@ const TOUCH_COLUMNS: GridColumnDefinition[] = [
 ];
 
 // =============================================================================
+// FUNNEL
+// =============================================================================
+
+interface StageDef {
+	id: string;
+	label: string;
+	tone: Tone;
+}
+
+/** The open stages in order, then the closed ones. */
+const OPEN_STAGES: StageDef[] = [
+	{ id: 'new', label: 'New', tone: 'blue' },
+	{ id: 'contacted', label: 'Contacted', tone: 'brand' },
+	{ id: 'replied', label: 'Replied', tone: 'orange' },
+	{ id: 'meeting_booked', label: 'Meeting booked', tone: 'green' },
+];
+const CLOSED_STAGES: StageDef[] = [
+	{ id: 'lost', label: 'Lost', tone: 'red' },
+	{ id: 'no_response', label: 'No response', tone: 'muted' },
+];
+
+const Stage: React.FC<{ stage: StageDef; count: number; max: number }> = ({ stage, count, max }) => (
+	<div style={stageStyle(stage.tone, count)} title={`${count} ${count === 1 ? 'opportunity' : 'opportunities'} at stage ${stage.id}`}>
+		<span style={styles.stageLabel}>{stage.label}</span>
+		<span style={styles.stageCount}>{count}</span>
+		<span style={styles.track}>
+			<span style={fillStyle(stage.tone, max > 0 ? count / max : 0)} />
+		</span>
+	</div>
+);
+
+const Funnel: React.FC<{ opportunities: Row[] }> = ({ opportunities }) => {
+	const counts = useMemo(() => {
+		const byStage: Record<string, number> = {};
+		for (const row of opportunities) {
+			const stage = String(row.stage ?? '');
+			byStage[stage] = (byStage[stage] ?? 0) + 1;
+		}
+		return byStage;
+	}, [opportunities]);
+	const max = Math.max(0, ...Object.values(counts));
+	return (
+		<>
+			<div style={styles.funnelLabel}>Opportunity pipeline</div>
+			<div style={styles.funnel}>
+				<div style={styles.stages}>
+					{OPEN_STAGES.map((stage, index) => (
+						<React.Fragment key={stage.id}>
+							{index > 0 && (
+								<span style={styles.arrow} aria-hidden>
+									<BxChevronRight size={16} />
+								</span>
+							)}
+							<Stage stage={stage} count={counts[stage.id] ?? 0} max={max} />
+						</React.Fragment>
+					))}
+				</div>
+				<div style={styles.closed}>
+					{CLOSED_STAGES.map((stage) => (
+						<Stage key={stage.id} stage={stage} count={counts[stage.id] ?? 0} max={max} />
+					))}
+				</div>
+			</div>
+			{opportunities.length === 0 && <div style={styles.empty}>No opportunities yet. Hunter adds one for each contract role it prospects.</div>}
+		</>
+	);
+};
+
+// =============================================================================
 // COMPONENT
 // =============================================================================
 
@@ -115,17 +211,34 @@ export const DataPanel: React.FC<{ db: DatabaseState }> = ({ db }) => {
 
 	return (
 		<Card
-			header='Database'
+			header={
+				<span style={styles.header}>
+					<IconTile tone='purple' size={26}>
+						<BxGridAlt size={14} />
+					</IconTile>
+					Shared database
+				</span>
+			}
 			headerActions={
 				<div style={styles.headerActions}>
-					{db.updatedAt && <span style={styles.updated}>Updated {new Date(db.updatedAt).toLocaleTimeString()}</span>}
+					{db.updatedAt && (
+						<span style={styles.updated} title='Refreshed every 5 seconds'>
+							<LiveDot tone={db.error ? 'error' : 'success'} live={!db.error} size={6} />
+							Updated {new Date(db.updatedAt).toLocaleTimeString()}
+						</span>
+					)}
 					<Button variant='secondary' small onClick={() => void db.refresh()}>
-						Refresh
+						<span style={styles.buttonLabel}>
+							<BxRefresh size={13} />
+							Refresh
+						</span>
 					</Button>
 				</div>
 			}
 		>
+			<div style={styles.intro}>The state the agents leave behind, read live from the shared database (read-only, every 5 seconds).</div>
 			{db.error && <Banner variant='error'>{db.error}</Banner>}
+			<Funnel opportunities={db.opportunities} />
 			<TabControl menu={menu} activeId={tab} onSelect={(id) => setTab(id as TabId)} />
 			<div style={styles.grid}>
 				{tab === 'consultants' && <DataGrid<Row> tableId='staffing-consultants' columns={CONSULTANT_COLUMNS} data={db.consultants} pageSizes={[10, 25]} emptyTitle='No consultants yet' />}

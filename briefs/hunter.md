@@ -23,6 +23,12 @@ If any value above is still a placeholder in double angle brackets, do not send 
 - Skip staffing agencies, recruiting firms and job boards that post on behalf of a client: we want the end client.
 - Skip `Acme Test Co` entirely.
 
+## Proposing opportunities
+
+- Propose an opportunity as soon as you have a real job posting (company, role title and job URL, each copied from a tool result) and a matching consultant from the bench: save it with stage new, the consultant and a two-line rationale, plus its three-email sequence as scheduled touches. The contact fields and the hook may stay empty.
+- Gmail is unavailable today: do not send any email. The touches stay scheduled.
+- A named decision-maker is an optional follow-up, only when a tool returns one.
+
 ## Who to contact
 
 - The hiring decision-maker for the role: the manager the role reports to, or the engineering, data or IT leader (for example Engineering Manager, Director of Engineering, Head of Data, VP Engineering, CTO). Never a recruiter or a generic inbox.
@@ -30,7 +36,7 @@ If any value above is still a placeholder in double angle brackets, do not send 
 
 ## Limits for each run
 
-- At most 1 new prospect per run.
+- At most 2 new opportunities per run.
 - Glasser: at most $0.20 per run, and no endpoint priced above $0.30 per call.
 
 ## Preferred Glasser endpoints (checked with inspect on 2026-10-07)
